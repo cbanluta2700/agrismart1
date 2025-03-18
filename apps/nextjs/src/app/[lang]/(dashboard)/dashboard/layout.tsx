@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getCurrentUser } from "@saasfly/auth";
+import { getCurrentUser } from "@saasfly/auth/auth.server";
 
 import { LocaleChange } from "~/components/locale-change";
 import { MainNav } from "~/components/main-nav";

@@ -183,7 +183,15 @@ const authMiddleware = withAuth(
     }
     if (isAuthPage) {
       if (isAuth) {
-        return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+        // Direct users to their role-specific dashboard based on their role
+        if (userRole === "SELLER") {
+          return NextResponse.redirect(new URL(`/${locale}/dashboard/seller`, req.url));
+        } else if (userRole === "BUYER") {
+          return NextResponse.redirect(new URL(`/${locale}/dashboard/buyer`, req.url));
+        } else {
+          // Default fallback if role is not set or doesn't match known roles
+          return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+        }
       }
       return null;
     }
@@ -197,7 +205,8 @@ const authMiddleware = withAuth(
       );
     }
     if (!hasPathAccess(req.nextUrl.pathname, userRole)) {
-      return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+      // Redirect to homepage instead of dashboard to avoid potential redirect loops
+      return NextResponse.redirect(new URL(`/${locale}`, req.url));
     }
   },
   {

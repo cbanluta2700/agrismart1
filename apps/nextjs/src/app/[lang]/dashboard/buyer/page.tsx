@@ -1,18 +1,18 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { Button } from "@saasfly/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@saasfly/ui/card";
-import { Icons } from "@saasfly/ui/icons";
+import { Rocket, Post, Dashboard, Search } from "@saasfly/ui/icons";
 
-import { auth } from "@/auth";
-import { DashboardHeader } from "~/components/dashboard-header";
-import { DashboardShell } from "~/components/dashboard-shell";
-import { marketingConfig } from "~/config/marketing";
+import { auth } from "~/lib/auth";
+import { validateRoleAccess } from "~/lib/role-validation";
+import { DashboardHeader } from "~/components/dashboard/dashboard-header";
+import { DashboardShell } from "~/components/shell";
 import type { Locale } from "~/config/i18n-config";
 import { getDictionary } from "~/lib/get-dictionary";
+import { marketingConfig } from "~/config/marketing";
 
 export const metadata: Metadata = {
   title: "Buyer Dashboard | AgriSmart",
@@ -28,10 +28,8 @@ export default async function BuyerDashboardPage({
 }) {
   const session = await auth();
   
-  // Check if user is authenticated and has BUYER role
-  if (!session?.user || session.user.role !== "BUYER") {
-    redirect(`/${lang}/login`);
-  }
+  // Use centralized role validation instead of inline checks
+  validateRoleAccess(session, "BUYER", lang);
 
   const dict = await getDictionary(lang);
 
@@ -39,11 +37,11 @@ export default async function BuyerDashboardPage({
     <DashboardShell>
       <DashboardHeader
         heading="Buyer Dashboard"
-        text="Welcome to AgriSmart - your agricultural marketplace"
+        description="Welcome to AgriSmart - your agricultural marketplace"
       >
         <Button asChild>
           <Link href={`/${lang}/dashboard/marketplace`}>
-            <Icons.ShoppingCart className="mr-2 h-4 w-4" />
+            <Search className="mr-2 h-4 w-4" />
             Browse Marketplace
           </Link>
         </Button>
@@ -114,7 +112,7 @@ export default async function BuyerDashboardPage({
           <CardContent className="pb-2">
             <div className="space-y-4">
               <div className="flex items-center">
-                <Icons.Package className="mr-2 h-5 w-5 text-muted-foreground" />
+                <Post className="mr-2 h-5 w-5 text-muted-foreground" />
                 <div className="ml-2 space-y-1">
                   <p className="text-sm font-medium leading-none">Order #234-5678</p>
                   <p className="text-xs text-muted-foreground">Heritage Seeds Collection</p>
@@ -122,7 +120,7 @@ export default async function BuyerDashboardPage({
                 <div className="ml-auto font-medium text-green-600">Delivered</div>
               </div>
               <div className="flex items-center">
-                <Icons.Package className="mr-2 h-5 w-5 text-muted-foreground" />
+                <Post className="mr-2 h-5 w-5 text-muted-foreground" />
                 <div className="ml-2 space-y-1">
                   <p className="text-sm font-medium leading-none">Order #123-9876</p>
                   <p className="text-xs text-muted-foreground">Organic Pesticides Bundle</p>
@@ -151,7 +149,7 @@ export default async function BuyerDashboardPage({
           <CardContent className="pb-2">
             <div className="space-y-4">
               <div className="flex items-center">
-                <Icons.FileText className="mr-2 h-5 w-5 text-muted-foreground" />
+                <Post className="mr-2 h-5 w-5 text-muted-foreground" />
                 <div className="ml-2 space-y-1">
                   <p className="text-sm font-medium leading-none">Crop Rotation Techniques</p>
                   <p className="text-xs text-muted-foreground">Maximize your yield</p>
@@ -159,7 +157,7 @@ export default async function BuyerDashboardPage({
                 <div className="ml-auto font-medium">5m read</div>
               </div>
               <div className="flex items-center">
-                <Icons.FileText className="mr-2 h-5 w-5 text-muted-foreground" />
+                <Post className="mr-2 h-5 w-5 text-muted-foreground" />
                 <div className="ml-2 space-y-1">
                   <p className="text-sm font-medium leading-none">Water Conservation Methods</p>
                   <p className="text-xs text-muted-foreground">Sustainable practices</p>

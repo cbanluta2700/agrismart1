@@ -49,7 +49,7 @@
     "class-variance-authority": "0.7.0",
     "clsx": "2.1.0",
     "cmdk": "0.2.1",
-    "lucide-react": "0.323.0",
+    "lucide-react": "^0.482.0",
     "tailwind-merge": "1.14.0",
     "zod": "3.22.4",
     "@tsparticles/react": "3.0.0",

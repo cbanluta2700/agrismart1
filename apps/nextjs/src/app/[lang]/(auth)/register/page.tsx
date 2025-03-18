@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { cn } from "@saasfly/ui";
-import { buttonVariants } from "~/components/button";
+import { buttonVariants } from "@saasfly/ui/button";
 
 import { UserAuthForm } from "~/components/user-auth-form";
 import type { Locale } from "~/config/i18n-config";

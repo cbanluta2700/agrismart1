@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@saasfly/auth";
+import { auth } from "@saasfly/auth/auth.server";
 import { getUserChats, getChatMessages } from "../api-utils";
 
 export async function GET(req: Request) {

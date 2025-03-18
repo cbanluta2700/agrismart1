@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { File, X, Download, FileText, Image as ImageIcon, Film, Music, Archive } from 'lucide-react';
 import { Button } from '../button';

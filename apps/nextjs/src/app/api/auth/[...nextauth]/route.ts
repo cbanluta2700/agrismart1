@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import NextAuth from "next-auth";
+import { authOptions } from "@saasfly/auth/auth.server";
 
-import { authOptions } from "@saasfly/auth";
-
-const handler = NextAuth(authOptions);
+// Use type assertion to handle version incompatibility between packages and app
+const handler = NextAuth(authOptions as any);
 
 export { handler as GET, handler as POST };

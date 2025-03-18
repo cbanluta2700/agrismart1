@@ -5,12 +5,10 @@ import { k8sRouter } from "./router/k8s";
 import { messagesRouter } from "./router/messages";
 import { ordersRouter } from "./router/orders";
 import { productsRouter } from "./router/products";
-import { stripeRouter } from "./router/stripe";
 import { createTRPCRouter } from "./trpc";
 
 // We're exporting this as appRouter to ensure consistency between edge and regular routes
 export const appRouter = createTRPCRouter({
-  stripe: stripeRouter,
   hello: helloRouter,
   k8s: k8sRouter,
   auth: authRouter,

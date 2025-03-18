@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Search Messages Component
  * 

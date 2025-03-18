@@ -25,6 +25,19 @@ const config = {
     mdxRs: true,
     // serverActions: true,
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't bundle server-only modules on the client
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        dns: false,
+      };
+    }
+    return config;
+  },
   images: {
     domains: ["images.unsplash.com", "avatars.githubusercontent.com", "www.twillot.com", "cdnv2.ruguoapp.com", "www.setupyourpay.com"],
   },

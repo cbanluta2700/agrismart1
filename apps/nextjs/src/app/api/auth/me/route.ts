@@ -1,40 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@saasfly/auth";
-import prisma from "@saasfly/db";
+import { NextResponse } from "next/server";
+import { auth } from "@saasfly/auth/auth.server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    // Get session from NextAuth
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
-    if (!session || !session.user?.email) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
+    if (!session?.user) {
+      return new NextResponse(
+        JSON.stringify({ error: "You must be logged in to access this endpoint" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Get user from database with role
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        image: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    
-    return NextResponse.json(user, {
+    return NextResponse.json({ user: session.user }, {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {

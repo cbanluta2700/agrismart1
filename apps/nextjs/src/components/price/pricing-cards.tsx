@@ -17,14 +17,11 @@ import { Button, buttonVariants } from "@saasfly/ui/button";
 import * as Icons from "@saasfly/ui/icons";
 import { Switch } from "@saasfly/ui/switch";
 
-import { BillingFormButton } from "~/components/price/billing-form-button";
 import { priceDataMap } from "~/config/price/price-data";
 import { useSigninModal } from "~/hooks/use-signin-modal";
-import { UserSubscriptionPlan } from "~/types";
 
 interface PricingCardsProps {
   userId?: string;
-  subscriptionPlan?: UserSubscriptionPlan;
   dict: Record<string, string>;
   params: {
     lang: string;
@@ -33,7 +30,6 @@ interface PricingCardsProps {
 
 export function PricingCards({
   userId,
-  subscriptionPlan,
   dict,
   params: { lang },
 }: PricingCardsProps) {
@@ -50,149 +46,160 @@ export function PricingCards({
         <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
           {dict.pricing}
         </p>
-        <h2 className="font-heading text-3xl leading-[1.1] md:text-5xl">
-          {dict.slogan}
-        </h2>
+        <h1 className="text-3xl font-bold sm:text-5xl">{dict.plan}</h1>
       </div>
-
       <div className="mb-4 flex items-center gap-5">
-        <span>{dict.monthly_bill}</span>
+        <span
+          className={`text-sm ${isYearly ? "text-muted-foreground" : "font-semibold"}`}
+        >
+          {dict.monthly}
+        </span>
         <Switch
           checked={isYearly}
           onCheckedChange={toggleBilling}
-          role="switch"
-          aria-label="switch-year"
+          aria-label="Toggle between monthly and yearly billing"
         />
-        <span>{dict.annual_bill}</span>
+        <span
+          className={`text-sm ${isYearly ? "font-semibold" : "text-muted-foreground"}`}
+        >
+          {dict.yearly}
+        </span>
       </div>
-
-      <div className="mx-auto grid max-w-screen-lg gap-5 bg-inherit py-5 md:grid-cols-3 lg:grid-cols-3">
-        {pricingData.map(
-          (offer: {
-            title:
-              | boolean
-              | Key
-              | ReactElement<any, string | JSXElementConstructor<any>>
-              | Iterable<ReactNode>
-              | PromiseLikeOfReactNode
-              | null
-              | undefined;
-            prices: {
-              monthly:
-                | string
-                | number
-                | boolean
-                | ReactElement<any, string | JSXElementConstructor<any>>
-                | Iterable<ReactNode>
-                | PromiseLikeOfReactNode
-                | null
-                | undefined;
-              yearly: number;
-            };
-            benefits: any[];
-            limitations: any[];
-            id: string;
-          }) => (
-            <div
-              className="relative flex flex-col overflow-hidden rounded-xl border"
-              key={offer?.title}
-            >
-              <div className="min-h-[150px] items-start space-y-4 bg-secondary/70 p-6">
-                <p className="font-urban flex text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  {offer?.title}
-                </p>
-
-                <div className="flex flex-row">
-                  <div className="flex items-end">
-                    <div className="flex text-left text-3xl font-semibold leading-6">
-                      {isYearly && offer?.prices?.monthly > 0 ? (
-                        <>
-                          <span className="mr-2 text-muted-foreground line-through">
-                            ${offer?.prices?.monthly}
-                          </span>
-                          <span>${offer?.prices?.yearly / 12}</span>
-                        </>
-                      ) : (
-                        `$${offer?.prices?.monthly}`
-                      )}
-                    </div>
-                    <div className="-mb-1 ml-2 text-left text-sm font-medium">
-                      <div>{dict.mo}</div>
-                    </div>
-                  </div>
-                </div>
-                {offer.prices.monthly > 0 ? (
-                  <div className="text-left text-sm text-muted-foreground">
-                    {isYearly
-                      ? `$${offer?.prices?.yearly} ${dict.annual_info}`
-                      : `${dict.monthly_info}`}
-                  </div>
-                ) : null}
+      <div className="mx-auto grid w-full max-w-screen-lg grid-cols-1 gap-5 lg:grid-cols-3">
+        {pricingData.map((offer) => (
+          <div
+            key={offer.title}
+            className={`relative flex flex-col justify-between rounded-lg border p-6 shadow-sm ${
+              offer.planType === "FREE"
+                ? "border-muted bg-muted/50"
+                : offer.planType === "PRO"
+                ? "border-primary bg-secondary/10"
+                : "border-primary/40"
+            }`}
+          >
+            {offer.planType === "PRO" && (
+              <div className="absolute -top-5 left-0 right-0 mx-auto w-32 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 px-3 py-2 text-sm font-medium text-white">
+                {dict.popular}
               </div>
+            )}
 
-              <div className="flex h-full flex-col justify-between gap-16 p-6">
-                <ul className="space-y-2 text-left text-sm font-medium leading-normal">
-                  {offer?.benefits.map((feature) => (
-                    <li className="flex items-start" key={feature}>
-                      <Icons.Check className="mr-3 h-5 w-5 shrink-0" />
-                      <p>{feature}</p>
-                    </li>
-                  ))}
-
-                  {offer?.limitations?.length > 0 &&
-                    offer.limitations.map((feature) => (
-                      <li
-                        className="flex items-start text-muted-foreground"
-                        key={feature}
-                      >
-                        <Icons.Close className="mr-3 h-5 w-5 shrink-0" />
-                        <p>{feature}</p>
-                      </li>
-                    ))}
-                </ul>
-
-                {userId && subscriptionPlan ? (
-                  offer?.id === "starter" ? (
-                    <Link
-                      href="/dashboard"
-                      className={buttonVariants({
-                        className: "w-full",
-                        variant: "default",
-                      })}
-                    >
-                      {dict.go_to_dashboard}
-                    </Link>
-                  ) : (
-                    <BillingFormButton
-                      year={isYearly}
-                      offer={offer}
-                      subscriptionPlan={subscriptionPlan}
-                      dict={dict}
-                    />
-                  )
+            <div>
+              <h3 className="my-3 text-center text-2xl font-bold">
+                {offer.title}
+              </h3>
+              <div className="mb-4 text-center text-4xl font-bold">
+                {isYearly ? (
+                  <>
+                    $
+                    {new Intl.NumberFormat().format(
+                      Math.floor(offer.prices.yearly / 12),
+                    )}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {" "}
+                      / {dict.mo}
+                    </span>
+                  </>
                 ) : (
-                  <Button onClick={signInModal.onOpen}>{dict.signup}</Button>
+                  <>
+                    ${new Intl.NumberFormat().format(offer.prices.monthly)}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {" "}
+                      / {dict.mo}
+                    </span>
+                  </>
                 )}
               </div>
-            </div>
-          ),
-        )}
-      </div>
+              <p className="mb-6 text-center text-gray-500">
+                <Balancer>
+                  {offer.description
+                    ? offer.description
+                    : "All the features you need to grow your business."}
+                </Balancer>
+              </p>
 
-      <p className="mt-3 text-center text-base text-muted-foreground">
-        <Balancer>
-          Email{" "}
-          <a
-            className="font-medium text-primary hover:underline"
-            href="mailto:support@saasfly.io"
-          >
-            support@saasfly.io
-          </a>{" "}
-          {dict.contact}
-          <br />
-          <strong>{dict.contact_2}</strong>
-        </Balancer>
-      </p>
+              <ul className="mb-6 space-y-2 text-left">
+                {offer.benefits.map(
+                  (
+                    benefit:
+                      | string
+                      | number
+                      | boolean
+                      | ReactElement<any, string | JSXElementConstructor<any>>
+                      | Iterable<ReactNode>
+                      | PromiseLikeOfReactNode
+                      | null
+                      | undefined,
+                    index: Key | null | undefined,
+                  ) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <Icons.CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>{benefit}</span>
+                    </li>
+                  ),
+                )}
+                {offer.limitations.map(
+                  (
+                    limitation:
+                      | string
+                      | number
+                      | boolean
+                      | ReactElement<any, string | JSXElementConstructor<any>>
+                      | Iterable<ReactNode>
+                      | PromiseLikeOfReactNode
+                      | null
+                      | undefined,
+                    index: Key | null | undefined,
+                  ) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <Icons.XCircle className="h-4 w-4 text-red-500" />
+                      <span className="text-muted-foreground">
+                        {limitation}
+                      </span>
+                    </li>
+                  ),
+                )}
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {userId ? (
+                offer.planType === "FREE" ? (
+                  <Link
+                    href={`/${lang}/dashboard`}
+                    className={buttonVariants({ variant: "secondary" })}
+                  >
+                    {dict.current_plan}
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/${lang}/dashboard`}
+                    className={buttonVariants({ variant: "default" })}
+                  >
+                    {dict.get_started}
+                  </Link>
+                )
+              ) : (
+                <Button
+                  onClick={() => signInModal.onOpen()}
+                  className={
+                    offer.planType === "FREE"
+                      ? "bg-muted-foreground hover:bg-muted-foreground/80"
+                      : ""
+                  }
+                >
+                  {dict.get_started}
+                </Button>
+              )}
+
+              {offer.planType !== "FREE" && (
+                <div className="text-xs text-muted-foreground">
+                  {dict.cancel_anytime}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

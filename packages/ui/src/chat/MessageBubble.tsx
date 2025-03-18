@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { UserAvatar } from './UserAvatar';
 import { Check, CheckCheck, MessageSquare } from 'lucide-react';

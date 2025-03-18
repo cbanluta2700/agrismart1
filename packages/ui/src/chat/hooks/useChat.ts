@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback, useEffect } from 'react';
 import { useMessageThreads } from './useMessageThreads';
 import { useSocketNotifications } from './useSocketNotifications';

@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Button } from "../button";
 import { MoreHorizontal, Phone, Video, Search, ArrowLeft } from "lucide-react";

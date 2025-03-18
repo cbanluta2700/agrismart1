@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Conversation List Component
  * 

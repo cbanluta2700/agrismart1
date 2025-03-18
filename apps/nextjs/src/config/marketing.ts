@@ -11,16 +11,16 @@ export const marketingConfig: MarketingConfig = {
       href: "/marketplace",
     },
     {
+      title: "AI Assistant",
+      href: "/ai-assistant",
+    },
+    {
       title: "Community",
       href: "/community",
     },
     {
       title: "Resources",
       href: "/resources",
-    },
-    {
-      title: "Pricing",
-      href: "/pricing",
     },
     {
       title: "About",

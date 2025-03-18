@@ -47,6 +47,11 @@ export const getDashboardConfig = async ({
         href: "/dashboard/marketplace",
       },
       {
+        id: "ai-assistant",
+        title: "AI Assistant",
+        href: "/dashboard/ai-assistant",
+      },
+      {
         id: "community",
         title: "Community",
         href: "/dashboard/community",

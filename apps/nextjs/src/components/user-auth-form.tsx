@@ -172,8 +172,11 @@ export function UserAuthForm({
   // Handler for registration
   async function onRegisterSubmit(data: RegisterFormData) {
     setIsLoading(true);
+    setErrorMessage(null); // Clear any previous errors
 
     try {
+      console.log("Registering user with role:", data.role);
+      
       // Create user account
       const response = await fetch(`/api/auth/register`, {
         method: "POST",
@@ -189,6 +192,7 @@ export function UserAuthForm({
       });
 
       const result = await response.json();
+      console.log("Registration response:", result);
 
       if (!response.ok) {
         setIsLoading(false);
@@ -200,13 +204,24 @@ export function UserAuthForm({
       const redirectUrl = data.role === "SELLER" 
         ? `/${lang}/dashboard/seller` 
         : `/${lang}/dashboard/buyer`;
+      
+      console.log("Redirecting to:", redirectUrl);
 
       // If registration was successful, try to sign in
-      await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email: data.email.toLowerCase(),
         password: data.password,
+        redirect: true,
         callbackUrl: redirectUrl,
       });
+      
+      // Note: If redirect: true is used, the page will redirect and this code won't execute
+      // This is a fallback in case redirect doesn't work
+      if (signInResult?.error) {
+        console.error("Sign in error after registration:", signInResult.error);
+        setErrorMessage("Registration successful but login failed. Please try logging in manually.");
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error("Registration error:", error);
       

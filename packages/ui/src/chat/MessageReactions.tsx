@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Smile, Plus } from "lucide-react";
 import { Button } from "../button";

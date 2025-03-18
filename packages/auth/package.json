@@ -2,6 +2,13 @@
   "name": "@saasfly/auth",
   "version": "0.1.0",
   "private": true,
+  "exports": {
+    ".": "./index.ts",
+    "./client": "./client.ts",
+    "./auth.server": "./auth.server.ts",
+    "./email-provider.server": "./email-provider.server.ts",
+    "./env.mjs": "./env.mjs"
+  },
   "main": "./index.ts",
   "types": "./index.ts",
   "scripts": {
