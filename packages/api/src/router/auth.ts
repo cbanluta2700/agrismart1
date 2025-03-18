@@ -2,9 +2,14 @@ import { unstable_noStore as noStore } from "next/cache";
 
 import { db } from "@saasfly/db";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, procedure } from "../trpc";
 
 export const authRouter = createTRPCRouter({
+  me: procedure.query(async (opts) => {
+    noStore();
+    return { ok: true, message: "tRPC working correctly!" };
+  }),
+  
   mySubscription: protectedProcedure.query(async (opts) => {
     noStore();
     const userId = opts.ctx.userId as string;

@@ -1,20 +1,40 @@
 import {
-  httpBatchLink,
-  type HTTPBatchLinkOptions,
+  httpLink,
   type HTTPHeaders,
   type TRPCLink,
+  loggerLink,
 } from "@trpc/client";
+import { proxy } from "valtio";
+import superjson from "superjson";
 
 import type { AppRouter } from "@saasfly/api";
 
 import { env } from "~/env.mjs";
 
+/**
+ * This is the state that is shared between client components
+ * It syncs the logged in user state between client components
+ */
+export const globalState = proxy({
+  user: null as any,
+});
+
 export { transformer } from "@saasfly/api/transformer";
 const getBaseUrl = () => {
-  if (typeof window !== "undefined") return "";
-  const vc = env.NEXT_PUBLIC_APP_URL;
-  if (vc) return vc;
-  return `http://localhost:3000`;
+  if (typeof window !== "undefined") {
+    // browser should use relative path
+    return "";
+  }
+  if (process.env.VERCEL_URL) {
+    // reference for vercel.com
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  if (process.env.RENDER_INTERNAL_HOSTNAME) {
+    // reference for render.com
+    return `http://${process.env.RENDER_INTERNAL_HOSTNAME}:${process.env.PORT}`;
+  }
+  // assume localhost
+  return `http://localhost:${process.env.PORT ?? 3000}`;
 };
 
 const lambdas = [""];
@@ -25,15 +45,26 @@ export const endingLink = (opts?: {
   ((runtime) => {
     const sharedOpts = {
       headers: opts?.headers,
-    } satisfies Partial<HTTPBatchLinkOptions>;
+    };
 
-    const edgeLink = httpBatchLink({
+    const edgeLink = httpLink({
       ...sharedOpts,
-      url: `${getBaseUrl()}/api/trpc/edge`,
+      url: `${getBaseUrl()}/api/trpc`,
+      headers() {
+        return {
+          ...sharedOpts.headers,
+        };
+      },
     })(runtime);
-    const lambdaLink = httpBatchLink({
+    
+    const lambdaLink = httpLink({
       ...sharedOpts,
       url: `${getBaseUrl()}/api/trpc/lambda`,
+      headers() {
+        return {
+          ...sharedOpts.headers,
+        };
+      },
     })(runtime);
 
     return (ctx) => {
@@ -47,3 +78,9 @@ export const endingLink = (opts?: {
       return endpoint === "edge" ? edgeLink(newCtx) : lambdaLink(newCtx);
     };
   }) satisfies TRPCLink<AppRouter>;
+
+export const externalLinks = [
+  loggerLink({
+    enabled: () => true,
+  }),
+];

@@ -1,0 +1,197 @@
+generator client {
+  provider     = "prisma-kysely"
+  output       = "."
+  enumFileName = "enums.ts"
+  fileName     = "types.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model Customer {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  stripeId  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()"))
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()"))
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(BUYER)
+  accounts      Account[]
+  sessions      Session[]
+
+  // Marketplace relationships
+  products      Product[]    @relation("SellerProducts")
+  reviews       Review[]
+  orders        Order[]
+  cartItems     CartItem[]
+  favorites     Favorite[]
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  CREATING
+  INITING
+  RUNNING
+  STOPPED
+  DELETED
+}
+
+// Marketplace models
+model Product {
+  id          String      @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  description String?     @db.Text
+  price       Float
+  stock       Int         @default(0)
+  images      String[]
+  sellerId    String      
+  seller      User        @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orderItems  OrderItem[]
+  reviews     Review[]
+  cartItems   CartItem[]
+  favorites   Favorite[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([sellerId])
+  @@index([categoryId])
+}
+
+// Fixed Category model with proper self-relation
+model Category {
+  id        String     @id @default(dbgenerated("gen_random_uuid()"))
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  children  Category[] @relation("CategoryHierarchy")
+  products  Product[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([parentId])
+}
+
+model Order {
+  id         String      @id @default(dbgenerated("gen_random_uuid()"))
+  buyerId    String      
+  buyer      User        @relation(fields: [buyerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status     OrderStatus @default(PENDING)
+  total      Float
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([buyerId])
+}
+
+model OrderItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Review {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String   
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rating    Int      @db.SmallInt
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model CartItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String   
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model Favorite {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String   
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}

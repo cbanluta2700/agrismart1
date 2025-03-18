@@ -40,20 +40,21 @@ export const metadata = {
   },
   description: siteConfig.description,
   keywords: [
-    "Next.js",
-    "Shadcn ui",
-    "Sass",
-    "Fast ",
-    "Simple ",
-    "Easy",
-    "Cloud Native",
+    "Agriculture",
+    "Farming",
+    "Marketplace",
+    "Community",
+    "Resources",
+    "AgriSmart",
+    "Sustainable",
+    "Local Produce",
   ],
   authors: [
     {
-      name: "saasfly",
+      name: "AgriSmart",
     },
   ],
-  creator: "Saasfly",
+  creator: "AgriSmart",
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -67,7 +68,7 @@ export const metadata = {
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
-  metadataBase: new URL("https://show.saasfly.io/"),
+  metadataBase: new URL(siteConfig.url),
   // manifest: `${siteConfig.url}/site.webmanifest`,
 };
 
@@ -91,8 +92,8 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
+          defaultTheme="light"
+          enableSystem={true}
         >
           <NextDevtoolsProvider>{children}</NextDevtoolsProvider>
           <Analytics />

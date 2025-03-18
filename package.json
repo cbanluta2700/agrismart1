@@ -1,13 +1,28 @@
 {
   "name": "nextjs-template",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "turbo build ",
+    "build": "turbo build",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo clean",
+    "db:check": "node scripts/simple-db-check.js",
+    "neon:check": "node --experimental-modules --es-module-specifier-resolution=node scripts/neon-db-check.js",
+    "neon:test": "bun run scripts/neon-connection-test.js",
+    "neon:direct": "bun run scripts/direct-neon-test.js",
+    "neon:vercel": "bun run scripts/vercel-pg-test.js",
+    "neon:vercel:improved": "bun run scripts/vercel-pg-test-improved.js",
+    "neon:vercel:create": "bun run scripts/vercel-pg-create-table.js",
+    "neon:improved": "bun run scripts/neon-connection-test-improved.js",
+    "neon:sdk": "bun run scripts/neon-sdk-test.js",
+    "neon:tcp": "bun run scripts/tcp-connect-test.js",
+    "pg:direct": "bun run scripts/direct-pg-test.js",
+    "prisma:test": "bun run scripts/prisma-connection-test.js",
+    "prisma:generate": "bun run scripts/prisma-generate.js",
+    "prisma:minimal": "bun run scripts/test-minimal-schema.js",
     "db:push": "cd ./packages/db/ && bun db:push",
     "dev": "turbo dev --parallel",
-    "dev:web": "turbo dev --parallel --filter !stripe",
+    "dev:web": "turbo dev --filter=@saasfly/nextjs",
     "format": "turbo format --continue -- --cache --cache-location='node_modules/.cache/.prettiercache' --ignore-path='../../.gitignore'",
     "format:fix": "turbo format --continue -- --write --cache --cache-location='node_modules/.cache/.prettiercache' --ignore-path='../../.gitignore'",
     "lint": "turbo lint -- --quiet -- --cache --cache-location 'node_modules/.cache/.eslintcache' && manypkg check",
@@ -18,12 +33,17 @@
     "gen": "turbo gen --config 'turbo/generators/config.ts'"
   },
   "devDependencies": {
+    "@prisma/client": "^6.5.0",
     "@turbo/gen": "1.13.3",
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^5.1.1",
     "check-dependency-version-consistency": "4.1.0",
+    "pg": "^8.14.1",
     "prettier": "3.2.5",
+    "prisma": "^6.5.0",
     "tailwind-config-viewer": "^2.0.4",
     "turbo": "1.13.3",
-    "typescript": "5.4.5"
+    "typescript": "^5.4.5"
   },
   "engines": {
     "node": ">=18"
@@ -34,5 +54,16 @@
     "packages/*",
     "tooling/*"
   ],
-  "packageManager": "bun@v1.1.10"
+  "packageManager": "bun@1.1.10",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@types/bcryptjs": "^3.0.0",
+    "@vercel/postgres": "^0.10.0",
+    "@vercel/postgres-kysely": "^0.10.0",
+    "bcryptjs": "^3.0.2",
+    "lucide-react": "^0.482.0",
+    "next-intl": "^4.0.2",
+    "uuid": "^11.1.0"
+  }
 }

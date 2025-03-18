@@ -19,6 +19,7 @@ import type { Locale } from "~/config/i18n-config";
 import { getDictionary } from "~/lib/get-dictionary";
 import { trpc } from "~/trpc/server";
 import type { ClustersArray } from "~/types/k8s";
+import { DbStatusChecker } from "~/components/db-status-checker";
 
 export const metadata = {
   title: "Dashboard",
@@ -96,6 +97,7 @@ export default async function DashboardPage({
             </EmptyPlaceholder>
           )}
         </div>
+        <DbStatusChecker />
       </DashboardShell>
     );
   }

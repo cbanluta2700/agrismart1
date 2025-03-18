@@ -35,6 +35,10 @@
     "main_nav_products": "Products",
     "main_nav_blog": "Blog",
     "main_nav_documentation": "Documentation",
+    "main_nav_ai_assistant": "AI Assistant",
+    "main_nav_marketplace": "Marketplace",
+    "main_nav_community": "Community",
+    "main_nav_resources": "Resources",
     "login": "Login",
     "signup": "Sign up",
     "": "",
@@ -89,7 +93,7 @@
     "": ""
   },
   "common": {
-    "copyright": "Copyright © ${currentYear} Nextify Limited. All rights reserved.",
+    "copyright": "Copyright \u00A9 ${currentYear} Nextify Limited. All rights reserved.",
     "dashboard": {
       "main_nav_documentation": "Documentation",
       "main_nav_support": "Support",

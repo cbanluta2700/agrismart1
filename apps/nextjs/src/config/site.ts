@@ -1,9 +1,9 @@
 export const siteConfig = {
-  name: "Saasfly",
-  description: "We provide an easier way to build saas service in production",
-  url: "https://github.com/saasfly/saasfly",
+  name: "AgriSmart",
+  description: "The complete platform for connecting farmers, buyers, and agricultural resources",
+  url: "https://agrismart.com",
   ogImage: "",
   links: {
-    github: "https://github.com/saasfly/saasfly",
+    github: "https://github.com/agrismart/agrismart",
   },
 };

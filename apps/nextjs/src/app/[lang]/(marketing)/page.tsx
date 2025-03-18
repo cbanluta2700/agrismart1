@@ -16,44 +16,45 @@ import * as Icons from "@saasfly/ui/icons";
 import type { Locale } from "~/config/i18n-config";
 import {VideoScroll} from "~/components/video-scroll";
 
+// Agricultural experts for the platform
 const people = [
   {
     id: 1,
-    name: "tianzx",
-    designation: "CEO at Nextify",
-    image: "https://avatars.githubusercontent.com/u/10096899",
-    link: "https://x.com/nextify2024",
+    name: "Dr. Emily Chen",
+    designation: "Agricultural Scientist",
+    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=250&h=250&auto=format&fit=crop",
+    link: "#",
   },
   {
     id: 2,
-    name: "jackc3",
-    designation: "Co-founder at Nextify",
-    image: "https://avatars.githubusercontent.com/u/10334353",
-    link: "https://x.com/BingxunYao",
+    name: "Thomas Rodriguez",
+    designation: "Organic Farming Expert",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&auto=format&fit=crop",
+    link: "#",
   },
   {
     id: 3,
-    name: "imesong",
-    designation: "Contributor",
-    image: "https://avatars.githubusercontent.com/u/3849293",
+    name: "Sarah Johnson",
+    designation: "Market Analyst",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&auto=format&fit=crop",
   },
   {
     id: 4,
-    name: "ziveen",
-    designation: "Contributor",
-    image: "https://avatars.githubusercontent.com/u/22560152",
+    name: "Michael Webb",
+    designation: "Equipment Specialist",
+    image: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=250&h=250&auto=format&fit=crop",
   },
   {
     id: 5,
-    name: "Zenuncl",
-    designation: "Independent Software Developer",
-    image: "https://avatars.githubusercontent.com/u/3316062",
+    name: "Amara Patel",
+    designation: "Sustainable Farming Advocate",
+    image: "https://images.unsplash.com/photo-1503185912284-5271ff81b9a8?w=250&h=250&auto=format&fit=crop",
   },
   {
     id: 6,
-    name: "Innei",
-    designation: "Indie Developer",
-    image: "https://avatars.githubusercontent.com/u/41265413",
+    name: "Robert Kim",
+    designation: "Agricultural Economist",
+    image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=250&h=250&auto=format&fit=crop",
   },
 ];
 
@@ -76,28 +77,35 @@ export default async function IndexPage({
                 <div className="mt-20">
                   <div
                     className="mb-6 max-w-4xl text-left text-4xl font-semibold dark:text-zinc-100 md:text-5xl xl:text-5xl md:leading-[4rem] xl:leading-[4rem]">
-                    {dict.marketing.title || "Ship your apps to the world easier with "}
-                    <ColourfulText text="Saasfly"/>
+                    Connecting Farmers, Buyers, and Resources with  
+                    <ColourfulText text=" AgriSmart"/>
                   </div>
                 </div>
 
                 <div className="mt-4">
                   <span className="text-neutral-500 dark:text-neutral-400 sm:text-lg">
-                    {dict.marketing.sub_title || "Your complete All-in-One solution for building SaaS services."}
+                    The complete platform for sustainable farming, direct marketplace access, and agricultural community support.
                   </span>
                 </div>
 
                 <div
                   className="mb-4 mt-6 flex w-full flex-col justify-center space-y-4 sm:flex-row sm:justify-start sm:space-x-8 sm:space-y-0 z-10">
-                  <Link href="https://github.com/saasfly/saasfly" target="_blank">
+                  <Link href={`/${lang}/marketplace`}>
                     <Button
-                      className="bg-blue-600 hover:bg-blue-500 text-white rounded-full text-lg px-6 h-12 font-medium">
-                      {dict.marketing.get_started}
+                      className="bg-green-600 hover:bg-green-500 text-white rounded-full text-lg px-6 h-12 font-medium">
+                      Explore Marketplace
                       <Icons.ArrowRight className="h-5 w-5"/>
                     </Button>
                   </Link>
 
-                  <CodeCopy/>
+                  <Link href={`/${lang}/community`}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full text-lg px-6 h-12 font-medium">
+                      Join Community
+                      <Icons.User className="ml-2 h-5 w-5"/>
+                    </Button>
+                  </Link>
                 </div>
 
                 <div className="flex xl:flex-row flex-col items-center justify-start mt-4 w-full">
@@ -106,16 +114,16 @@ export default async function IndexPage({
                   </div>
                   <div className="flex flex-col items-center justify-start ml-8">
                     <div className="w-[340px]">
-                      <text className="font-semibold">9 </text>
+                      <text className="font-semibold">5,000+ </text>
                       <text
-                        className="text-neutral-500 dark:text-neutral-400">{dict.marketing.contributors.contributors_desc}</text>
+                        className="text-neutral-500 dark:text-neutral-400">farmers and agricultural businesses connected</text>
                     </div>
                     <div className="w-[340px]">
                       <text
-                        className="text-neutral-500 dark:text-neutral-400">{dict.marketing.contributors.developers_first}</text>
-                      <ColourfulText text="2000"/>
+                        className="text-neutral-500 dark:text-neutral-400">Join a community of over </text>
+                      <ColourfulText text="10,000"/>
                       <text
-                        className="text-neutral-500 dark:text-neutral-400">{dict.marketing.contributors.developers_second}</text>
+                        className="text-neutral-500 dark:text-neutral-400"> active members in the agricultural sector</text>
                     </div>
                   </div>
                 </div>
@@ -137,20 +145,17 @@ export default async function IndexPage({
 
       <section className="container pt-24">
         <div className="flex flex-col justify-center items-center pt-10">
-          <div className="text-lg text-neutral-500 dark:text-neutral-400">{dict.marketing.sponsor.title}</div>
+          <div className="text-lg text-neutral-500 dark:text-neutral-400">Supported by Agricultural Partners</div>
           <div className="mt-4 flex items-center gap-4">
-            <Link href="https://www.twillot.com/" target="_blank">
-              <Image src="https://www.twillot.com/logo-128.png" width="48" height="48" alt="twillot"/>
-            </Link>
-            <Link href="https://www.setupyourpay.com/" target="_blank">
-              <Image src="https://www.setupyourpay.com/logo.png" width="48" height="48" alt="setupyourpay" />
-            </Link>
-            <Link href="https://opencollective.com/saasfly" target="_blank">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 hover:bg-accent dark:hover:bg-neutral-800/30">
-                <Icons.Heart className="w-5 h-5 fill-pink-600 text-pink-600 dark:fill-pink-700 dark:text-pink-700" />
-                <span className="text-sm font-medium text-neutral-500 dark:text-neutral-200">{dict.marketing.sponsor.donate || ''}</span>
-              </div>
-            </Link>
+            <div className="px-4 py-2 rounded-xl border-2 border-neutral-300 dark:border-neutral-700">
+              <span className="text-sm font-medium">FarmTech Solutions</span>
+            </div>
+            <div className="px-4 py-2 rounded-xl border-2 border-neutral-300 dark:border-neutral-700">
+              <span className="text-sm font-medium">EcoGrow Association</span>
+            </div>
+            <div className="px-4 py-2 rounded-xl border-2 border-neutral-300 dark:border-neutral-700">
+              <span className="text-sm font-medium">AgriInnovate Fund</span>
+            </div>
           </div>
         </div>
       </section>
@@ -163,11 +168,11 @@ export default async function IndexPage({
         <div className="flex h-full w-full flex-col items-center pb-[100px] pt-10">
           <div>
             <h1 className="mb-6 text-center text-3xl font-bold dark:text-zinc-100 md:text-5xl">
-              {dict.marketing.people_comment.title}
+              What Farmers & Buyers Are Saying
             </h1>
           </div>
           <div className="mb-6 text-lg text-neutral-500 dark:text-neutral-400">
-            {dict.marketing.people_comment.desc}
+            Real stories from our community members who have transformed their agricultural businesses with AgriSmart
           </div>
 
           <div className="w-full overflow-x-hidden">

@@ -1,35 +1,25 @@
+datasource db {
+  provider = "postgresql"
+  // For Neon database, use unpooled connection URL for schema operations
+  url      = env("DATABASE_URL")
+}
+
 generator client {
   provider     = "prisma-kysely"
   output       = "."
-  fileName     = "types.ts"
   enumFileName = "enums.ts"
-}
-
-datasource db {
-  provider     = "postgresql"
-  url          = env("POSTGRES_URL")
-  relationMode = "prisma"
-}
-
-enum SubscriptionPlan {
-  FREE
-  PRO
-  BUSINESS
+  fileName     = "types.ts"
 }
 
 model Customer {
-  id                     Int               @id @default(autoincrement())
-  authUserId             String
-  name                   String?
-  plan                   SubscriptionPlan?
-  stripeCustomerId       String?           @unique
-  stripeSubscriptionId   String?           @unique
-  stripePriceId          String?
-  stripeCurrentPeriodEnd DateTime?
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @default(now())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  stripeId  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([authUserId])
+  @@index([userId])
 }
 
 model Account {
@@ -38,17 +28,17 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -56,48 +46,612 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
 }
 
 model User {
-  id            String    @id @default(dbgenerated("gen_random_uuid()"))
+  id            String        @id @default(dbgenerated("gen_random_uuid()"))
   name          String?
-  email         String?   @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
+  password      String?
+  role          UserRole      @default(BUYER)
+  customer      Customer?
   accounts      Account[]
   sessions      Session[]
+  chatSessions  ChatSession[]
+  feedback      Feedback[]
+  cartItems     CartItem[]
+  favorites     Favorite[]
+  orders        Order[]
+  reviews       Review[]
+  products      Product[]     @relation("SellerProducts")
+  organizations OrganizationMember[]
+  groups        GroupMember[]
+  articles      Article[]
+  courses       CourseEnrollment[]
+  documentation Documentation[]
+  // User profile relationship
+  userProfile   UserProfile?
+  // Chat system relationships
+  conversations    ConversationParticipant[]
+  sentMessages     Message[]                 @relation("MessageSender")
+  messageReactions MessageReaction[]
+  notifications    Notification[]
+  // Community relationships
+  posts           GroupPost[]
+  comments        Comment[]
+  groupComments   GroupComment[]
+  topics          Topic[]
+  connections     UserConnection[] @relation("UserConnections")
+  connectedTo     UserConnection[] @relation("ConnectedToUsers")
+  // Instructor relationships
+  instructorCourses Course[]       @relation("CourseInstructor")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
+enum UserRole {
+  BUYER
+  SELLER
+  MODERATOR
+  ADMIN
 }
 
-model K8sClusterConfig {
-  id         Int               @id @default(autoincrement())
-  name       String
-  location   String
-  authUserId String
-  plan       SubscriptionPlan? @default(FREE)
-  network    String?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @default(now())
-  status     Status?           @default(PENDING)
-  delete     Boolean?          @default(false)
+model Product {
+  id          String      @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  description String?     @db.Text
+  price       Float
+  stock       Int         @default(0)
+  images      String[]
+  sellerId    String
+  seller      User        @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orderItems  OrderItem[]
+  reviews     Review[]
+  cartItems   CartItem[]
+  favorites   Favorite[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  // @@unique([plan, authUserId])
-  @@index([authUserId])
+  @@index([sellerId])
+  @@index([categoryId])
 }
 
-enum Status {
+model Category {
+  id        String     @id @default(dbgenerated("gen_random_uuid()"))
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  children  Category[] @relation("CategoryHierarchy")
+  products  Product[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([parentId])
+}
+
+model Order {
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
+  buyerId   String
+  buyer     User        @relation(fields: [buyerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status    OrderStatus @default(PENDING)
+  total     Float
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([buyerId])
+}
+
+model OrderItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Review {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rating    Int      @db.SmallInt
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model CartItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model Favorite {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model ChatSession {
+  id        String        @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  title     String?
+  messages  ChatMessage[]
+  feedback  Feedback[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id               String      @id @default(dbgenerated("gen_random_uuid()"))
+  sessionId        String
+  session          ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  role             String // user, assistant, system
+  content          String      @db.Text
+  promptTokens     Int?
+  completionTokens Int?
+  createdAt        DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model Feedback {
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rating    Int // 1-5 rating
+  comment   String?     @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model PromptTemplate {
+  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  description String?  @db.Text
+  template    String   @db.Text
+  category    String // e.g., "product_recommendation", "farming_advice", etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum OrderStatus {
   PENDING
-  CREATING
-  INITING
-  RUNNING
-  STOPPED
-  DELETED
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// Chat system models for user-to-user communication
+model Conversation {
+  id            String                    @id @default(dbgenerated("gen_random_uuid()"))
+  name          String?
+  isGroup       Boolean                   @default(false)
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  creatorId     String?
+  lastMessageAt DateTime                  @default(now())
+  messages      Message[]
+  participants  ConversationParticipant[]
+  groupAvatar   String?
+
+  // Add fields to support conversation info display
+  description String? @db.Text
+  isArchived  Boolean @default(false)
+  isPinned    Boolean @default(false)
+
+  @@index([creatorId])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(dbgenerated("gen_random_uuid()"))
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isAdmin        Boolean      @default(false)
+  joinedAt       DateTime     @default(now())
+  leftAt         DateTime?
+
+  // Add fields for UI features
+  hasNewMessages       Boolean @default(false)
+  lastReadMessageId    String?
+  notificationsEnabled Boolean @default(true)
+
+  @@unique([userId, conversationId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model Message {
+  id             String              @id @default(dbgenerated("gen_random_uuid()"))
+  conversationId String
+  conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  senderId       String
+  sender         User                @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  content        String              @db.Text
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  isRead         Boolean             @default(false)
+  attachments    MessageAttachment[]
+  reactions      MessageReaction[]
+
+  // Thread functionality
+  isReplyToId String? // If this message is a reply to another message
+  isReplyTo   Message?  @relation("MessageReplies", fields: [isReplyToId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  replies     Message[] @relation("MessageReplies")
+  replyCount  Int       @default(0)
+
+  // Add status field to track message delivery and read status
+  status MessageStatus @default(SENT)
+
+  // Add field for typing indicators and editing
+  isEdited Boolean   @default(false)
+  editedAt DateTime?
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([isReplyToId])
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  ERROR
+}
+
+model MessageAttachment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  url       String
+  type      String // image, document, etc.
+  name      String
+  size      Int
+  createdAt DateTime @default(now())
+
+  // Add fields for attachment previews and processing
+  thumbnailUrl     String?
+  processingStatus String? // processing, completed, error
+  mimeType         String?
+
+  @@index([messageId])
+}
+
+model MessageReaction {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  data      Json? // Additional data related to the notification
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+}
+
+enum NotificationType {
+  MESSAGE
+  MENTION
+  THREAD_REPLY
+  GROUP_INVITATION
+  REACTION
+  SYSTEM
+}
+
+// Community Features - Organization and Membership
+model Organization {
+  id          String               @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  slug        String               @unique
+  description String?              @db.Text
+  imageUrl    String?
+  website     String?
+  location    String?
+  isVerified  Boolean              @default(false)
+  members     OrganizationMember[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model OrganizationMember {
+  id             String       @id @default(dbgenerated("gen_random_uuid()"))
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  role           String       @default("member")
+  joinedAt       DateTime     @default(now())
+  isAdmin        Boolean      @default(false)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// Community Features - Forums and Discussions
+model Forum {
+  id          String   @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  imageUrl    String?
+  topics      Topic[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Topic {
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
+  title     String
+  slug      String    @unique
+  content   String    @db.Text
+  forumId   String
+  forum     Forum     @relation(fields: [forumId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  comments  Comment[]
+  viewCount Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([forumId])
+  @@index([authorId])
+}
+
+model Comment {
+  id              String    @id @default(dbgenerated("gen_random_uuid()"))
+  content         String    @db.Text
+  topicId         String
+  topic           Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId        String
+  author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  replies         Comment[] @relation("CommentReplies")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([topicId])
+  @@index([authorId])
+  @@index([parentCommentId])
+}
+
+// Community Features - Groups and Communities
+model Group {
+  id          String        @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  slug        String        @unique
+  description String?       @db.Text
+  imageUrl    String?
+  privacy     String        @default("public")
+  members     GroupMember[]
+  posts       GroupPost[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model GroupMember {
+  id       String   @id @default(dbgenerated("gen_random_uuid()"))
+  groupId  String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+  isAdmin  Boolean  @default(false)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model GroupPost {
+  id        String         @id @default(dbgenerated("gen_random_uuid()"))
+  content   String         @db.Text
+  groupId   String
+  group     Group          @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId  String
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  comments  GroupComment[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([groupId])
+  @@index([authorId])
+}
+
+model GroupComment {
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
+  content   String    @db.Text
+  postId    String
+  post      GroupPost @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([postId])
+  @@index([authorId])
+}
+
+// Resources Features - Knowledge Base
+model Article {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  title     String
+  slug      String   @unique
+  content   String   @db.Text
+  imageUrl  String?
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tags      String[]
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+}
+
+// Resources Features - Educational Content
+model Course {
+  id           String             @id @default(dbgenerated("gen_random_uuid()"))
+  title        String
+  slug         String             @unique
+  description  String             @db.Text
+  imageUrl     String?
+  instructorId String
+  instructor   User               @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  lessons      Lesson[]
+  enrollments  CourseEnrollment[]
+  level        String             @default("beginner")
+  duration     Int? // in minutes
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([instructorId])
+}
+
+model Lesson {
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  title      String
+  content    String   @db.Text
+  videoUrl   String?
+  duration   Int? // in minutes
+  orderIndex Int      @default(0)
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([courseId])
+}
+
+model CourseEnrollment {
+  id          String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  progress    Int       @default(0) // percentage
+  isComplete  Boolean   @default(false)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// Resources Features - Documentation
+model Documentation {
+  id        String          @id @default(dbgenerated("gen_random_uuid()"))
+  title     String
+  slug      String          @unique
+  content   String          @db.Text
+  parentId  String?
+  parent    Documentation?  @relation("DocumentationHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  children  Documentation[] @relation("DocumentationHierarchy")
+  authorId  String
+  author    User            @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([parentId])
+  @@index([authorId])
+}
+
+// User profile for enhanced member directory features
+model UserProfile {
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  bio           String?  @db.Text
+  headline      String?
+  location      String?
+  skills        String[]
+  expertise     String[]
+  experience    String?  @db.Text
+  education     String?  @db.Text
+  socialLinks   Json?    // Store social media links
+  interests     String[]
+  availability  String?  // Available for consulting, collaboration, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// User connections for the member directory feature
+model UserConnection {
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId        String
+  user          User     @relation("UserConnections", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  connectedToId String
+  connectedTo   User     @relation("ConnectedToUsers", fields: [connectedToId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status        String   @default("pending") // pending, accepted, rejected
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, connectedToId])
+  @@index([userId])
+  @@index([connectedToId])
 }

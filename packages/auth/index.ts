@@ -7,6 +7,9 @@ import { KyselyAdapter } from "@auth/kysely-adapter";
 import { getServerSession, type NextAuthOptions, type User } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { compare } from "bcryptjs";
 
 import { MagicLinkEmail, resend, siteConfig } from "@saasfly/common";
 
@@ -41,13 +44,8 @@ export const authOptions: NextAuthOptions = {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   adapter: KyselyAdapter(db),
-
   providers: [
-    GitHubProvider({
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-      httpOptions: { timeout: 15000 },
-    }),
+    // Email provider is always enabled
     EmailProvider({
       sendVerificationRequest: async ({ identifier, url }) => {
         const user = await db
@@ -82,6 +80,78 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    // Credentials provider for email/password login
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        // Find user by email
+        const user = await db
+          .selectFrom("User")
+          .selectAll()
+          .where("email", "=", credentials.email)
+          .executeTakeFirst();
+
+        if (!user) {
+          return null;
+        }
+
+        // Use a type assertion to tell TypeScript about the password field
+        const userWithPassword = user as typeof user & { password: string | null };
+        
+        if (!userWithPassword.password) {
+          return null;
+        }
+
+        // Verify password
+        const isPasswordValid = await compare(credentials.password, userWithPassword.password);
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          emailVerified: user.emailVerified,
+          image: user.image,
+        };
+      },
+    }),
+    // GitHub provider is conditionally enabled
+    ...(env.GITHUB_CLIENT_ID !== "dev-placeholder" 
+      ? [
+          GitHubProvider({
+            clientId: env.GITHUB_CLIENT_ID,
+            clientSecret: env.GITHUB_CLIENT_SECRET,
+            httpOptions: { timeout: 15000 },
+          }),
+        ] 
+      : []),
+    // Google provider is conditionally enabled
+    ...(env.GOOGLE_CLIENT_ID !== "dev-placeholder"
+      ? [
+          GoogleProvider({
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+            authorization: {
+              params: {
+                prompt: "consent",
+                access_type: "offline",
+                response_type: "code"
+              }
+            },
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     session({ token, session }) {

@@ -1,0 +1,23 @@
+// This is a minimal schema for testing connectivity
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Minimal model for testing
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()"))
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("BUYER")
+}

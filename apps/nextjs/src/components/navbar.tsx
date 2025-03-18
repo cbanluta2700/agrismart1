@@ -43,7 +43,6 @@ export function NavBar({
   dropdown,
 }: NavBarProps) {
   const scrolled = useScroll(50);
-  const signInModal = useSigninModal();
   const segment = useSelectedLayoutSegment();
 
   return (
@@ -103,16 +102,17 @@ export function NavBar({
               dict={dropdown}
             />
           ) : (
-            <Button
-              className="px-3"
-              variant="default"
-              size="sm"
-              onClick={signInModal.onOpen}
-            >
-              {typeof marketing.signup === "string"
-                ? marketing.signup
-                : "Default Signup Text"}
-            </Button>
+            <Link href={`/${lang}/register`}>
+              <Button
+                className="px-3"
+                variant="default"
+                size="sm"
+              >
+                {typeof marketing.signup === "string"
+                  ? marketing.signup
+                  : "Default Signup Text"}
+              </Button>
+            </Link>
           )}
         </div>
       </div>

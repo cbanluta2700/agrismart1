@@ -9,7 +9,12 @@ import { i18n } from "~/config/i18n-config";
 
 const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png"];
 
-const noRedirectRoute = ["/api(.*)", "/trpc(.*)", "/admin"];
+const noRedirectRoute = [
+  "/api(.*)", 
+  "/trpc(.*)", 
+  "/admin",
+  "/api/public-db-test"  
+];
 
 const publicRoute = [
   "/(\\w{2}/)?signin(.*)",
@@ -19,12 +24,71 @@ const publicRoute = [
   "/(\\w{2}/)?blog(.*)",
   "/(\\w{2}/)?pricing(.*)",
   "^/\\w{2}$", // root with locale
+  "/api/public-db-test", 
 ];
 
-function getLocale(request: NextRequest): string | undefined {
+// Role-based access control paths with CRUD permissions
+const roleProtectedRoutes = {
+  BUYER: [
+    "/(\\w{2}/)?dashboard/buyer(.*)",
+    "/(\\w{2}/)?dashboard/community(.*)" // Buyers can access community features
+  ],
+  SELLER: [
+    "/(\\w{2}/)?dashboard/seller(.*)",
+    "/(\\w{2}/)?dashboard/marketplace(.*)", // Sellers can access marketplace management
+    "/(\\w{2}/)?dashboard/community(.*)" // Sellers can access community features
+  ],
+  MODERATOR: [
+    "/(\\w{2}/)?dashboard/moderator(.*)",
+    "/(\\w{2}/)?dashboard/marketplace(.*)", // Moderators can manage marketplace
+    "/(\\w{2}/)?dashboard/resources(.*)", // Moderators can manage resources
+    "/(\\w{2}/)?dashboard/community(.*)" // Moderators can manage community
+  ],
+  ADMIN: [
+    "/(\\w{2}/)?dashboard/admin(.*)",
+    "/(\\w{2}/)?dashboard/marketplace(.*)",
+    "/(\\w{2}/)?dashboard/resources(.*)",
+    "/(\\w{2}/)?dashboard/community(.*)"
+  ],
+};
+
+// Check if the path requires a specific role
+function requiresRole(pathname: string, role: string): boolean {
+  const routes = roleProtectedRoutes[role as keyof typeof roleProtectedRoutes] || [];
+  return routes.some((route) => new RegExp(`^${route}$`).test(pathname));
+}
+
+// Check if the current user has access to the requested path
+function hasPathAccess(pathname: string, userRole: string | null): boolean {
+  // If no role, deny access to all protected routes
+  if (!userRole) return false;
+  
+  // Check if path requires a specific role
+  for (const [role, routes] of Object.entries(roleProtectedRoutes)) {
+    if (role !== userRole && routes.some(route => new RegExp(`^${route}$`).test(pathname))) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+// Update to accept both NextRequest and the extended NextRequestWithAuth
+function getLocale(request: { headers: { get: (key: string) => string | null } } & { nextUrl: { pathname: string } }): string | undefined {
   // Negotiator expects plain object so we need to transform headers
   const negotiatorHeaders: Record<string, string> = {};
-  request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
+  // Handle headers whether they come from NextRequest or NextRequestWithAuth
+  if ('forEach' in request.headers) {
+    (request.headers as Headers).forEach((value, key) => (negotiatorHeaders[key] = value));
+  } else {
+    // Fallback for NextRequestWithAuth where headers might be different
+    const headerKeys = ['accept-language', 'cookie', 'user-agent'];
+    headerKeys.forEach(key => {
+      const value = request.headers.get(key);
+      if (value) negotiatorHeaders[key] = value;
+    });
+  }
+  
   const locales = Array.from(i18n.locales);
   // Use negotiator and intl-localematcher to get best locale
   const languages = new Negotiator({ headers: negotiatorHeaders }).languages(
@@ -48,6 +112,11 @@ function isNoNeedProcess(request: NextRequest): boolean {
   return noNeedProcessRoute.some((route) => new RegExp(route).test(pathname));
 }
 
+function isApiRoute(request: NextRequest): boolean {
+  const pathname = request.nextUrl.pathname;
+  return pathname.startsWith('/api/');
+}
+
 /**
  * 1、 if the request is public page and don't have locale, redirect to locale page
  * 2、 if the request is not public page and don't have locale, redirect to login page
@@ -56,6 +125,11 @@ function isNoNeedProcess(request: NextRequest): boolean {
  * @returns
  */
 export default async function middleware(request: NextRequest) {
+  // Always bypass API routes completely
+  if (isApiRoute(request)) {
+    return NextResponse.next();
+  }
+  
   if (isNoNeedProcess(request)) {
     return null;
   }
@@ -97,6 +171,7 @@ const authMiddleware = withAuth(
     );
     const isAuthRoute = /^\/api\/trpc\//.test(req.nextUrl.pathname);
     const locale = getLocale(req);
+    const userRole = token?.role as string | null;
 
     if (isAuthRoute && isAuth) {
       return NextResponse.next();
@@ -121,6 +196,9 @@ const authMiddleware = withAuth(
         new URL(`/${locale}/login?from=${encodeURIComponent(from)}`, req.url),
       );
     }
+    if (!hasPathAccess(req.nextUrl.pathname, userRole)) {
+      return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+    }
   },
   {
     callbacks: {
@@ -132,5 +210,5 @@ const authMiddleware = withAuth(
 );
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"]
 };

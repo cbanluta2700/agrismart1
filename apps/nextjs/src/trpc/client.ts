@@ -3,27 +3,33 @@ import { experimental_createTRPCNextAppDirClient } from "@trpc/next/app-dir/clie
 
 import type { AppRouter } from "@saasfly/api";
 
-import { endingLink, transformer } from "./shared";
+import { transformer } from "./shared";
+import { endingLink } from "./shared";
 
 export const trpc = experimental_createTRPCNextAppDirClient<AppRouter>({
   config() {
     return {
       transformer,
       links: [
-        // loggerLink({
-        //   enabled: (opts) =>
-        //     process.env.NODE_ENV === "development" ||
-        //     (opts.direction === "down" && opts.result instanceof Error),
-        // }),
         loggerLink({
-          enabled: () => true,
+          enabled: (opts) => true,
         }),
         endingLink({
           headers: {
             "x-trpc-source": "client",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
           },
         }),
       ],
+      queryClientConfig: {
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: false,
+          },
+        },
+      },
     };
   },
 });

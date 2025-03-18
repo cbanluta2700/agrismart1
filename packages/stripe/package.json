@@ -24,7 +24,7 @@
   "dependencies": {
     "@saasfly/db": "workspace:*",
     "@t3-oss/env-nextjs": "0.8.0",
-    "stripe": "14.15.0"
+    "stripe": "^17.7.0"
   },
   "devDependencies": {
     "@saasfly/eslint-config": "workspace:*",
@@ -32,7 +32,7 @@
     "@saasfly/typescript-config": "workspace:*",
     "eslint": "8.57.0",
     "prettier": "3.2.5",
-    "typescript": "5.4.5"
+    "typescript": "^5.4.5"
   },
   "eslintConfig": {
     "extends": [

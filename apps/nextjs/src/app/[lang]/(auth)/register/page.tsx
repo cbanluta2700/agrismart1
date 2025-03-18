@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { cn } from "@saasfly/ui";
-import { buttonVariants } from "@saasfly/ui/button";
+import { buttonVariants } from "~/components/button";
 
 import { UserAuthForm } from "~/components/user-auth-form";
 import type { Locale } from "~/config/i18n-config";
@@ -41,10 +41,14 @@ export default async function RegisterPage({
               Create an account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your email below to create your account
+              Enter your details below to create your account
             </p>
           </div>
-          <UserAuthForm lang={lang} dict={dict.login} disabled={true} />
+          <UserAuthForm 
+            lang={lang} 
+            dict={dict.login} 
+            isRegister={true} 
+          />
           <p className="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <Link
